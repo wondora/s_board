@@ -1,0 +1,860 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Modern Board</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg: #f8fafc;
+  --card-bg: #ffffff;
+  --text-main: #0f172a;
+  --text-sub: #475569;
+  --text-muted: #94a3b8;
+  --border: #e2e8f0;
+  --border-focus: #3b82f6;
+  --primary: #0f172a;
+  --primary-hover: #1e293b;
+  --accent: #2563eb;
+  --accent-light: #eff6ff;
+  --danger: #ef4444;
+  --danger-light: #fef2f2;
+  --radius: 14px;
+  --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 12px rgba(15,23,42,0.04);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text-main);
+  font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+  letter-spacing: -0.015em;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 36px 20px 80px;
+}
+
+/* Header */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+.brand-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-main);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+.brand-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #16a34a;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.brand-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background: #16a34a;
+  border-radius: 50%;
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text-main);
+  border-radius: 10px;
+  padding: 9px 15px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+.btn.primary {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.btn.primary:hover {
+  background: var(--primary-hover);
+}
+.btn.danger {
+  color: var(--danger);
+  border-color: #fecaca;
+  background: #fff;
+}
+.btn.danger:hover {
+  background: var(--danger-light);
+  border-color: var(--danger);
+}
+.btn.sm {
+  padding: 6px 11px;
+  font-size: 13px;
+  border-radius: 8px;
+}
+
+/* Category Tabs */
+.cats {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  margin-bottom: 18px;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.cats::-webkit-scrollbar { display: none; }
+.cat {
+  border: 0;
+  background: transparent;
+  color: var(--text-sub);
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.cat:hover {
+  background: #e2e8f0;
+  color: var(--text-main);
+}
+.cat.active {
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Main Panel */
+.panel {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+/* Toolbar */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: #fff;
+}
+.search-box {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+.search-icon {
+  position: absolute;
+  left: 13px;
+  color: var(--text-muted);
+  width: 17px;
+  height: 17px;
+  pointer-events: none;
+}
+.search {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px 10px 38px;
+  font-size: 14px;
+  color: var(--text-main);
+  background: #f8fafc;
+  outline: none;
+  transition: all 0.2s ease;
+}
+.search:focus {
+  background: #fff;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+}
+
+/* Board Row Layout */
+.row {
+  display: grid;
+  grid-template-columns: 50px 75px 1fr 100px 95px 60px;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  align-items: center;
+  font-size: 14px;
+  transition: background-color 0.15s ease;
+}
+.row:hover:not(.head) {
+  background: #f8fafc;
+}
+.row.head {
+  border-top: 0;
+  background: #fafbfc;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.title-cell {
+  font-weight: 500;
+  color: var(--text-main);
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.title-cell:hover {
+  color: var(--accent);
+}
+.badge-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #475569;
+  text-align: center;
+}
+.badge-tag.notice {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+.meta-text {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Pagination */
+.pages {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 20px;
+  background: #fff;
+  border-top: 1px solid var(--border);
+}
+.page-btn {
+  min-width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text-sub);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.page-btn:hover {
+  background: #f1f5f9;
+  color: var(--text-main);
+}
+.page-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+/* Article View */
+.view-container {
+  padding: 32px;
+}
+.view-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.view-title {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.4;
+  margin-bottom: 12px;
+  color: var(--text-main);
+}
+.view-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 13px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.view-content {
+  min-height: 200px;
+  padding: 28px 0;
+  line-height: 1.8;
+  font-size: 15px;
+  color: #1e293b;
+  overflow-wrap: anywhere;
+}
+.view-content img {
+  max-width: 100%;
+  border-radius: 12px;
+  margin: 12px 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+.link-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+  margin-top: 10px;
+  transition: all 0.15s ease;
+}
+.link-card:hover {
+  background: var(--accent-light);
+  border-color: #bfdbfe;
+}
+
+/* Editor & Login Forms */
+.form-container {
+  padding: 32px;
+}
+.form-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+.field {
+  margin-bottom: 18px;
+}
+.field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-sub);
+  margin-bottom: 8px;
+}
+.input-text, select {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 14px;
+  color: var(--text-main);
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+.input-text:focus, select:focus {
+  background: #fff;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+}
+.editorbar {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+  background: #fafbfc;
+}
+.tool-btn {
+  border: 0;
+  background: transparent;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.tool-btn:hover {
+  background: #e2e8f0;
+  color: var(--text-main);
+}
+#editor {
+  min-height: 280px;
+  border: 1px solid var(--border);
+  padding: 16px;
+  border-radius: 0 0 10px 10px;
+  outline: none;
+  line-height: 1.8;
+  font-size: 14px;
+  background: #fff;
+  color: var(--text-main);
+}
+#editor:focus {
+  border-color: var(--border-focus);
+}
+.tip-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+.form-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* Admin Center Card */
+.admin-card {
+  max-width: 420px;
+  margin: 40px auto;
+  padding: 32px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+}
+
+.hidden { display: none !important; }
+
+/* Responsive */
+@media(max-width: 720px) {
+  .wrap { padding: 20px 14px 60px; }
+  .row {
+    grid-template-columns: 1fr 75px;
+    gap: 8px;
+    padding: 14px 16px;
+  }
+  .row.head, .row>*:nth-child(1), .row>*:nth-child(2), .row>*:nth-child(5), .row>*:nth-child(6) {
+    display: none;
+  }
+  .title-cell { font-size: 15px; }
+  .view-container, .form-container { padding: 20px 16px; }
+  .view-title { font-size: 20px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- Header -->
+  <header>
+    <div class="brand-group">
+      <div class="brand" onclick="showBoard()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        <span>Modern Board</span>
+      </div>
+      <div id="adminBadge" class="brand-badge hidden">관리자 모드</div>
+    </div>
+    <div class="actions">
+      <button class="btn sm" onclick="showAdmin()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <span>관리자</span>
+      </button>
+      <button class="btn primary sm hidden" id="btnWrite" onclick="showWrite()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>글쓰기</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Board List Section -->
+  <section id="board">
+    <div class="cats" id="cats"></div>
+    <div class="panel">
+      <div class="toolbar">
+        <div class="search-box">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input id="search" class="search" placeholder="검색어를 입력하세요" onkeydown="if(event.key==='Enter')loadPosts()">
+        </div>
+        <button class="btn sm" onclick="loadPosts()">검색</button>
+      </div>
+      <div id="rows"></div>
+      <div class="pages" id="pages"></div>
+    </div>
+  </section>
+
+  <!-- Article View Section -->
+  <section id="view" class="panel hidden">
+    <div class="view-container">
+      <div class="view-nav">
+        <button class="btn sm" onclick="showBoard()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          <span>목록으로</span>
+        </button>
+        <div id="adminPostActions" class="hidden" style="display:flex;gap:8px">
+          <button id="btnEdit" class="btn sm">수정</button>
+          <button id="btnDel" class="btn sm danger">삭제</button>
+        </div>
+      </div>
+      <div id="viewBody"></div>
+    </div>
+  </section>
+
+  <!-- Write / Edit Section -->
+  <section id="write" class="panel hidden">
+    <div class="form-container">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <h2 id="editorTitle" class="form-title" style="margin-bottom:0">글쓰기</h2>
+        <button class="btn sm" onclick="showBoard()">취소</button>
+      </div>
+      <input type="hidden" id="postId">
+      <div class="field">
+        <label>카테고리</label>
+        <select id="category"></select>
+      </div>
+      <div class="field">
+        <label>제목</label>
+        <input id="title" class="input-text" maxlength="200" placeholder="제목을 입력하세요">
+      </div>
+      <div class="field">
+        <label>작성자</label>
+        <input id="author" class="input-text" maxlength="50" placeholder="작성자">
+      </div>
+      <div class="field">
+        <label>내용</label>
+        <div class="editorbar">
+          <button class="tool-btn" onclick="cmd('bold')"><b>B</b></button>
+          <button class="tool-btn" onclick="cmd('italic')"><i>I</i></button>
+          <button class="tool-btn" onclick="cmd('underline')"><u>U</u></button>
+          <button class="tool-btn" onclick="cmd('insertUnorderedList')">• 목록</button>
+          <button class="tool-btn" onclick="addLink()">🔗 링크</button>
+        </div>
+        <div id="editor" contenteditable="true"></div>
+        <div class="tip-box">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          <span>Windows 화면 캡처 이미지를 클립보드(Ctrl+V)로 바로 붙여넣을 수 있습니다.</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>자료 링크 (선택)</label>
+        <input id="link" class="input-text" placeholder="https://...">
+      </div>
+      <div class="form-footer">
+        <span class="meta-text" style="font-size:12px">파일은 외부 링크(Google Drive, GitHub 등) 연결 방식을 권장합니다.</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn" onclick="showBoard()">취소</button>
+          <button id="btnSubmit" class="btn primary" onclick="savePost()">등록</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Admin Login / Logout Section -->
+  <section id="admin" class="hidden">
+    <div class="admin-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <h2 style="font-size:18px;font-weight:700">관리자 인증</h2>
+        <button class="btn sm" onclick="showBoard()">닫기</button>
+      </div>
+      <div id="loginBox">
+        <div class="field">
+          <label>아이디</label>
+          <input id="username" class="input-text" placeholder="아이디 (예: coswons)" onkeydown="if(event.key==='Enter')login()">
+        </div>
+        <div class="field">
+          <label>비밀번호</label>
+          <input id="pw" class="input-text" type="password" placeholder="비밀번호" onkeydown="if(event.key==='Enter')login()">
+        </div>
+        <button class="btn primary" style="width:100%;margin-top:8px;padding:11px" onclick="login()">로그인</button>
+      </div>
+      <div id="adminBox" class="hidden" style="text-align:center;padding:16px 0">
+        <p style="font-size:15px;font-weight:600;margin-bottom:6px">관리자로 로그인 중입니다</p>
+        <p class="meta-text" style="font-size:13px;margin-bottom:20px">글 작성, 수정 및 삭제 권한이 활성화되었습니다.</p>
+        <button class="btn danger" style="width:100%" onclick="logout()">로그아웃</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const SUPABASE_URL = "https://zsxdbznxpmevbuvuzkjo.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzeGRiem54cG1ldmJ1dnV6a2pvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3NTM3NDUsImV4cCI6MjEwNDMyOTc0NX0.Gj3_9gcvbsy3lQNFH5dWXPftAFAWHiK-A3yjhVYM2AI";
+const ADMIN_EMAIL_DOMAIN = "@admin.local";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const CATS = [
+  ["notice", "공지사항"],
+  ["qna", "Q&A"],
+  ["free", "자유게시판"],
+  ["info", "정보"]
+];
+const SIZE = 15;
+let cat = "all", page = 1, isAdmin = false, currentPost = null;
+
+function $(x) { return document.getElementById(x); }
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+function cname(x) { return CATS.find(c => c[0] === x)?.[1] || x; }
+function date(x) { return new Date(x).toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" }).replace(/\. /g, "-").replace(".", ""); }
+
+function only(id) {
+  ["board", "view", "write", "admin"].forEach(x => $(x).classList.toggle("hidden", x !== id));
+}
+function showBoard() { only("board"); loadPosts(); }
+
+function showWrite() {
+  if (!isAdmin) return alert("관리자만 작성할 수 있습니다.");
+  $("postId").value = "";
+  $("editorTitle").textContent = "글쓰기";
+  $("btnSubmit").textContent = "등록";
+  $("title").value = "";
+  $("author").value = "관리자";
+  $("editor").innerHTML = "";
+  $("link").value = "";
+  only("write");
+}
+
+function showEdit(post) {
+  if (!isAdmin) return alert("관리자만 수정할 수 있습니다.");
+  $("postId").value = post.id;
+  $("editorTitle").textContent = "글 수정";
+  $("btnSubmit").textContent = "수정 완료";
+  $("category").value = post.category;
+  $("title").value = post.title;
+  $("author").value = post.author || "관리자";
+  $("editor").innerHTML = post.content;
+  $("link").value = post.link_url || "";
+  only("write");
+}
+
+function showAdmin() { only("admin"); adminUI(); }
+
+function init() {
+  $("cats").innerHTML = '<button class="cat active" data-c="all">전체</button>' +
+    CATS.map(c => `<button class="cat" data-c="${c[0]}">${c[1]}</button>`).join("");
+  $("category").innerHTML = CATS.map(c => `<option value="${c[0]}">${c[1]}</option>`).join("");
+  
+  $("cats").onclick = e => {
+    let b = e.target.closest(".cat");
+    if (!b) return;
+    cat = b.dataset.c;
+    page = 1;
+    document.querySelectorAll(".cat").forEach(x => x.classList.toggle("active", x === b));
+    loadPosts();
+  };
+  loadPosts();
+}
+
+async function loadPosts() {
+  let q = $("search").value.trim();
+  let query = sb.from("posts")
+    .select("id,category,title,author,views,created_at,is_notice", { count: "exact" })
+    .order("created_at", { ascending: false });
+  
+  if (cat !== "all") query = query.eq("category", cat);
+  if (q) query = query.or(`title.ilike.%${q}%,content.ilike.%${q}%`);
+  
+  let r = await query.range((page - 1) * SIZE, page * SIZE - 1);
+  if (r.error) {
+    $("rows").innerHTML = `<div class="empty">데이터를 불러오는 중 오류가 발생했습니다: ${esc(r.error.message)}</div>`;
+    return;
+  }
+  
+  let headerHtml = `
+    <div class="row head">
+      <div>번호</div>
+      <div>분류</div>
+      <div>제목</div>
+      <div>작성자</div>
+      <div>날짜</div>
+      <div>조회</div>
+    </div>
+  `;
+  
+  let rowsHtml = r.data.length ? r.data.map(p => `
+    <div class="row">
+      <div class="meta-text">${p.is_notice ? '📌' : p.id}</div>
+      <div><span class="badge-tag ${p.category === 'notice' ? 'notice' : ''}">${esc(cname(p.category))}</span></div>
+      <div class="title-cell" onclick="openPost(${p.id})">${esc(p.title)}</div>
+      <div class="meta-text">${esc(p.author || "관리자")}</div>
+      <div class="meta-text">${date(p.created_at)}</div>
+      <div class="meta-text">${p.views}</div>
+    </div>
+  `).join("") : `<div class="empty">등록된 게시글이 없습니다.</div>`;
+  
+  $("rows").innerHTML = headerHtml + rowsHtml;
+  
+  let n = Math.ceil((r.count || 0) / SIZE);
+  $("pages").innerHTML = n > 1 ? Array.from({ length: n }, (_, i) => `
+    <button class="page-btn ${page === i + 1 ? 'active' : ''}" onclick="page=${i + 1};loadPosts()">${i + 1}</button>
+  `).join("") : "";
+}
+
+async function openPost(id) {
+  let r = await sb.from("posts").select("*").eq("id", id).single();
+  if (r.error) return alert(r.error.message);
+  currentPost = r.data;
+  
+  await sb.rpc("increment_post_views", { post_id: id });
+  
+  $("viewBody").innerHTML = `
+    <h1 class="view-title">${esc(r.data.title)}</h1>
+    <div class="view-meta">
+      <span class="badge-tag ${r.data.category === 'notice' ? 'notice' : ''}">${esc(cname(r.data.category))}</span>
+      <span>${esc(r.data.author || "관리자")}</span>
+      <span>•</span>
+      <span>${date(r.data.created_at)}</span>
+      <span>•</span>
+      <span>조회 ${r.data.views}</span>
+    </div>
+    <div class="view-content">${r.data.content}</div>
+    ${r.data.link_url ? `
+      <div style="margin-top:20px">
+        <a class="link-card" href="${esc(r.data.link_url)}" target="_blank" rel="noopener">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+          <span>자료 바로가기</span>
+        </a>
+      </div>
+    ` : ""}
+  `;
+  
+  $("btnEdit").onclick = () => showEdit(currentPost);
+  $("btnDel").onclick = () => del(id);
+  only("view");
+  adminUI();
+}
+
+function cmd(x) { document.execCommand(x, false, null); $("editor").focus(); }
+function addLink() {
+  let u = prompt("링크 주소", "https://");
+  if (u) document.execCommand("createLink", false, u);
+}
+$("editor").addEventListener("paste", e => {
+  for (const i of e.clipboardData.items || []) {
+    if (i.type.startsWith("image/")) {
+      e.preventDefault();
+      let f = i.getAsFile(), rd = new FileReader();
+      rd.onload = () => document.execCommand("insertHTML", false, `<img src="${rd.result}" alt="캡처 이미지">`);
+      rd.readAsDataURL(f);
+      break;
+    }
+  }
+});
+
+async function savePost() {
+  if (!isAdmin) return alert("관리자 권한이 필요합니다.");
+  let id = $("postId").value;
+  let data = {
+    category: $("category").value,
+    title: $("title").value.trim(),
+    author: $("author").value.trim() || "관리자",
+    content: $("editor").innerHTML.trim(),
+    link_url: $("link").value.trim() || null
+  };
+  if (!data.title || !data.content) return alert("제목과 내용을 입력하세요.");
+  if (data.link_url && !/^https?:\/\//i.test(data.link_url)) {
+    return alert("링크는 http:// 또는 https://로 시작해야 합니다.");
+  }
+
+  let r = id ? await sb.from("posts").update(data).eq("id", id) : await sb.from("posts").insert(data);
+  if (r.error) alert((id ? "수정" : "등록") + " 실패: " + r.error.message);
+  else {
+    alert(id ? "수정되었습니다." : "등록되었습니다.");
+    if (id) openPost(id); else showBoard();
+  }
+}
+
+async function login() {
+  let id = $("username").value.trim();
+  if (!id) return alert("아이디를 입력하세요.");
+  let email = id.includes("@") ? id : id + ADMIN_EMAIL_DOMAIN;
+  let r = await sb.auth.signInWithPassword({ email, password: $("pw").value });
+  if (r.error) alert("로그인 실패: " + r.error.message);
+  else {
+    adminUI();
+    showBoard();
+  }
+}
+
+async function logout() {
+  await sb.auth.signOut();
+  adminUI();
+  showBoard();
+}
+
+async function adminUI() {
+  let r = await sb.auth.getSession();
+  isAdmin = !!r.data.session;
+  $("loginBox").classList.toggle("hidden", isAdmin);
+  $("adminBox").classList.toggle("hidden", !isAdmin);
+  
+  let btnWrite = $("btnWrite");
+  if (btnWrite) btnWrite.classList.toggle("hidden", !isAdmin);
+  
+  let adminBadge = $("adminBadge");
+  if (adminBadge) adminBadge.classList.toggle("hidden", !isAdmin);
+  
+  let adminActions = $("adminPostActions");
+  if (adminActions) adminActions.classList.toggle("hidden", !isAdmin);
+}
+
+async function del(id) {
+  if (!isAdmin) return alert("관리자만 삭제할 수 있습니다.");
+  if (!confirm("정말 이 게시글을 삭제할까요?")) return;
+  let r = await sb.from("posts").delete().eq("id", id);
+  if (r.error) alert(r.error.message);
+  else {
+    alert("삭제되었습니다.");
+    showBoard();
+  }
+}
+
+sb.auth.onAuthStateChange(() => adminUI());
+init();
+adminUI();
+</script>
+</body>
+</html>
