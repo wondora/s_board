@@ -465,6 +465,52 @@ header {
   box-shadow: var(--shadow-md);
 }
 
+/* Category Manager */
+.catman-card {
+  max-width: 560px;
+  margin: 40px auto;
+  padding: 32px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+}
+.catman-list {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.catman-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+  background: #fff;
+}
+.catman-row:first-child { border-top: 0; }
+.catman-row .catman-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+}
+.catman-row .catman-slug {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.catman-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.catman-add {
+  display: flex;
+  gap: 8px;
+}
+.catman-add .input-text { flex: 1; }
+
 .hidden { display: none !important; }
 
 /* Responsive */
@@ -490,12 +536,15 @@ header {
   <header>
     <div class="brand-group">
       <div class="brand" onclick="showBoard()">
-        <!--<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>-->
         <span>THE ONE</span>
       </div>
       <div id="adminBadge" class="brand-badge hidden">관리자 모드</div>
     </div> 
     <div class="actions">
+      <button class="btn sm hidden" id="btnCatManage" onclick="showCatManage()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h7"></path></svg>
+        <span>카테고리 관리</span>
+      </button>
       <button class="btn sm" onclick="showAdmin()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
         <span>관리자</span>
@@ -614,6 +663,21 @@ header {
       </div>
     </div>
   </section>
+
+  <!-- Category Management Section -->
+  <section id="catmanage" class="hidden">
+    <div class="catman-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <h2 style="font-size:18px;font-weight:700">카테고리 관리</h2>
+        <button class="btn sm" onclick="showBoard()">닫기</button>
+      </div>
+      <div class="catman-list" id="catmanList"></div>
+      <div class="catman-add">
+        <input id="newCatName" class="input-text" placeholder="새 카테고리 이름 (예: 이벤트)" onkeydown="if(event.key==='Enter')addCategory()">
+        <button class="btn primary" onclick="addCategory()">추가</button>
+      </div>
+    </div>
+  </section>
 </div>
 
 <script>
@@ -622,13 +686,8 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const ADMIN_EMAIL_DOMAIN = "@admin.local";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const CATS = [
-  ["notice", "공지사항"],
-  ["qna", "Q&A"],
-  ["free", "자유게시판"],
-  ["info", "정보"]
-];
 const SIZE = 15;
+let CATS = []; // loaded from Supabase: [[slug, name], ...]
 let cat = "all", page = 1, isAdmin = false, currentPost = null;
 
 function $(x) { return document.getElementById(x); }
@@ -641,7 +700,7 @@ function cname(x) { return CATS.find(c => c[0] === x)?.[1] || x; }
 function date(x) { return new Date(x).toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" }).replace(/\. /g, "-").replace(".", ""); }
 
 function only(id) {
-  ["board", "view", "write", "admin"].forEach(x => $(x).classList.toggle("hidden", x !== id));
+  ["board", "view", "write", "admin", "catmanage"].forEach(x => $(x).classList.toggle("hidden", x !== id));
 }
 function showBoard() { only("board"); loadPosts(); }
 
@@ -654,6 +713,7 @@ function showWrite() {
   $("author").value = "관리자";
   $("editor").innerHTML = "";
   $("link").value = "";
+  renderCategorySelect();
   only("write");
 }
 
@@ -662,6 +722,7 @@ function showEdit(post) {
   $("postId").value = post.id;
   $("editorTitle").textContent = "글 수정";
   $("btnSubmit").textContent = "수정 완료";
+  renderCategorySelect();
   $("category").value = post.category;
   $("title").value = post.title;
   $("author").value = post.author || "관리자";
@@ -672,11 +733,87 @@ function showEdit(post) {
 
 function showAdmin() { only("admin"); adminUI(); }
 
-function init() {
+function showCatManage() {
+  if (!isAdmin) return alert("관리자만 카테고리를 관리할 수 있습니다.");
+  only("catmanage");
+  renderCatManageList();
+}
+
+function renderCats() {
   $("cats").innerHTML = '<button class="cat active" data-c="all">전체</button>' +
-    CATS.map(c => `<button class="cat" data-c="${c[0]}">${c[1]}</button>`).join("");
-  $("category").innerHTML = CATS.map(c => `<option value="${c[0]}">${c[1]}</option>`).join("");
-  
+    CATS.map(c => `<button class="cat ${c[0] === cat ? 'active' : ''}" data-c="${c[0]}">${esc(c[1])}</button>`).join("");
+}
+
+function renderCategorySelect() {
+  $("category").innerHTML = CATS.map(c => `<option value="${c[0]}">${esc(c[1])}</option>`).join("");
+}
+
+async function loadCategories() {
+  let r = await sb.from("categories").select("slug,name").order("sort_order", { ascending: true });
+  if (r.error) {
+    console.error("카테고리 로드 실패:", r.error.message);
+    CATS = [];
+  } else {
+    CATS = r.data.map(c => [c.slug, c.name]);
+  }
+  renderCats();
+}
+
+function slugify(name) {
+  let base = "cat_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  return base;
+}
+
+async function addCategory() {
+  if (!isAdmin) return alert("관리자만 카테고리를 추가할 수 있습니다.");
+  let name = $("newCatName").value.trim();
+  if (!name) return alert("카테고리 이름을 입력하세요.");
+  if (CATS.some(c => c[1] === name)) return alert("이미 같은 이름의 카테고리가 있습니다.");
+  let slug = slugify(name);
+  let sortOrder = CATS.length;
+  let r = await sb.from("categories").insert({ slug, name, sort_order: sortOrder });
+  if (r.error) return alert("카테고리 추가 실패: " + r.error.message);
+  $("newCatName").value = "";
+  await loadCategories();
+  renderCatManageList();
+}
+
+async function renameCategory(slug, oldName) {
+  let name = prompt("새 카테고리 이름", oldName);
+  if (name === null) return;
+  name = name.trim();
+  if (!name) return alert("이름을 입력하세요.");
+  let r = await sb.from("categories").update({ name }).eq("slug", slug);
+  if (r.error) return alert("수정 실패: " + r.error.message);
+  await loadCategories();
+  renderCatManageList();
+}
+
+async function deleteCategory(slug, name) {
+  let countRes = await sb.from("posts").select("id", { count: "exact", head: true }).eq("category", slug);
+  let postCount = countRes.count || 0;
+  let msg = postCount > 0
+    ? `"${name}" 카테고리에는 게시글 ${postCount}개가 있습니다. 삭제해도 게시글은 남아있지만 목록에서 분류가 표시되지 않을 수 있습니다. 계속할까요?`
+    : `"${name}" 카테고리를 삭제할까요?`;
+  if (!confirm(msg)) return;
+  let r = await sb.from("categories").delete().eq("slug", slug);
+  if (r.error) return alert("삭제 실패: " + r.error.message);
+  if (cat === slug) { cat = "all"; page = 1; }
+  await loadCategories();
+  renderCatManageList();
+}
+
+function renderCatManageList() {
+  $("catmanList").innerHTML = CATS.length ? CATS.map(c => `
+    <div class="catman-row">
+      <div class="catman-name">${esc(c[1])}</div>
+      <button class="btn sm" onclick="renameCategory('${c[0]}', ${JSON.stringify(c[1])})">이름 변경</button>
+      <button class="btn sm danger" onclick="deleteCategory('${c[0]}', ${JSON.stringify(c[1])})">삭제</button>
+    </div>
+  `).join("") : `<div class="catman-empty">등록된 카테고리가 없습니다.</div>`;
+}
+
+async function init() {
   $("cats").onclick = e => {
     let b = e.target.closest(".cat");
     if (!b) return;
@@ -685,6 +822,7 @@ function init() {
     document.querySelectorAll(".cat").forEach(x => x.classList.toggle("active", x === b));
     loadPosts();
   };
+  await loadCategories();
   loadPosts();
 }
 
@@ -833,6 +971,9 @@ async function adminUI() {
   
   let btnWrite = $("btnWrite");
   if (btnWrite) btnWrite.classList.toggle("hidden", !isAdmin);
+  
+  let btnCatManage = $("btnCatManage");
+  if (btnCatManage) btnCatManage.classList.toggle("hidden", !isAdmin);
   
   let adminBadge = $("adminBadge");
   if (adminBadge) adminBadge.classList.toggle("hidden", !isAdmin);
