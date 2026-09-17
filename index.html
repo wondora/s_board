@@ -807,10 +807,17 @@ function renderCatManageList() {
   $("catmanList").innerHTML = CATS.length ? CATS.map(c => `
     <div class="catman-row">
       <div class="catman-name">${esc(c[1])}</div>
-      <button class="btn sm" onclick="renameCategory('${c[0]}', ${JSON.stringify(c[1])})">이름 변경</button>
-      <button class="btn sm danger" onclick="deleteCategory('${c[0]}', ${JSON.stringify(c[1])})">삭제</button>
+      <button class="btn sm cat-rename" data-slug="${esc(c[0])}" data-name="${esc(c[1])}">이름 변경</button>
+      <button class="btn sm danger cat-delete" data-slug="${esc(c[0])}" data-name="${esc(c[1])}">삭제</button>
     </div>
   `).join("") : `<div class="catman-empty">등록된 카테고리가 없습니다.</div>`;
+
+  $("catmanList").querySelectorAll(".cat-rename").forEach(btn => {
+    btn.onclick = () => renameCategory(btn.dataset.slug, btn.dataset.name);
+  });
+  $("catmanList").querySelectorAll(".cat-delete").forEach(btn => {
+    btn.onclick = () => deleteCategory(btn.dataset.slug, btn.dataset.name);
+  });
 }
 
 async function init() {
