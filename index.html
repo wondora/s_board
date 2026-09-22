@@ -313,11 +313,17 @@ header {
   align-items: center;
   margin-bottom: 24px;
 }
+.view-title-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
 .view-title {
   font-size: 24px;
   font-weight: 700;
   line-height: 1.4;
-  margin-bottom: 12px;
   color: var(--text-main);
 }
 .view-meta {
@@ -580,10 +586,6 @@ header {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
           <span>목록으로</span>
         </button>
-        <div id="adminPostActions" class="hidden" style="display:flex;gap:8px">
-          <button id="btnEdit" class="btn sm">수정</button>
-          <button id="btnDel" class="btn sm danger">삭제</button>
-        </div>
       </div>
       <div id="viewBody"></div>
     </div>
@@ -886,7 +888,13 @@ async function openPost(id) {
   await sb.rpc("increment_post_views", { post_id: id });
   
   $("viewBody").innerHTML = `
-    <h1 class="view-title">${esc(r.data.title)}</h1>
+    <div class="view-title-wrap">
+      <h1 class="view-title">${esc(r.data.title)}</h1>
+      <div id="adminPostActions" class="hidden" style="display:flex;gap:8px">
+        <button id="btnEdit" class="btn sm" style="background:#22c55e;color:#fff;border-color:#22c55e">수정</button>
+        <button id="btnDel" class="btn sm danger">삭제</button>
+      </div>
+    </div>
     <div class="view-meta">
       <span class="badge-tag ${r.data.category === 'notice' ? 'notice' : ''}">${esc(cname(r.data.category))}</span>
       <span>${esc(r.data.author || "관리자")}</span>
