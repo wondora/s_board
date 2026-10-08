@@ -1222,6 +1222,19 @@ header {
 
       <div class="field">
 
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input id="isSecret" type="checkbox" style="width:16px;height:16px">
+          <span>🔒 비밀글</span>
+        </label>
+
+        <div class="meta-text" style="font-size:12px;margin-top:5px">
+          비밀글은 관리자에게만 보이며 일반 게시판 목록에서는 숨겨집니다.
+        </div>
+
+      </div>
+
+      <div class="field">
+
         <label>내용</label>
 
         <div class="editorbar">
@@ -1369,6 +1382,7 @@ const SUPABASE_URL = "https://zsxdbznxpmevbuvuzkjo.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzeGRiem54cG1ldmJ1dnV6a2pvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3NTM3NDUsImV4cCI6MjEwNDMyOTc0NX0.Gj3_9gcvbsy3lQNFH5dWXPftAFAWHiK-A3yjhVYM2AI";
 
 const ADMIN_EMAIL_DOMAIN = "@admin.local";
+const ADMIN_EMAIL = "coswons@admin.local";
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -1424,6 +1438,8 @@ function showWrite() {
 
   $("author").value = "관리자";
 
+  $("isSecret").checked = false;
+
   $("editor").innerHTML = "";
 
   $("link").value = "";
@@ -1453,6 +1469,8 @@ function showEdit(post) {
   $("title").value = post.title;
 
   $("author").value = post.author || "관리자";
+
+  $("isSecret").checked = !!post.is_secret;
 
   $("editor").innerHTML = post.content;
 
@@ -1674,7 +1692,7 @@ async function loadPosts() {
 
   let query = sb.from("posts")
 
-    .select("id,category,title,author,views,created_at,is_notice", { count: "exact" })
+    .select("id,category,title,author,views,created_at,is_notice,is_secret", { count: "exact" })
 
     .order("created_at", { ascending: false });
 
@@ -1728,7 +1746,7 @@ async function loadPosts() {
 
       <div><span class="badge-tag ${p.category === 'notice' ? 'notice' : ''}">${esc(cname(p.category))}</span></div>
 
-      <div class="title-cell" onclick="openPost(${p.id})">${esc(p.title)}</div>
+      <div class="title-cell" onclick="openPost(${p.id})">${p.is_secret ? "🔒 " : ""}${esc(p.title)}</div>
 
       <div class="meta-text">${esc(p.author || "관리자")}</div>
 
@@ -1763,6 +1781,10 @@ async function openPost(id) {
   let r = await sb.from("posts").select("*").eq("id", id).single();
 
   if (r.error) return alert(r.error.message);
+
+  if (r.data.is_secret && !isAdmin) {
+    return alert("비밀글은 관리자만 볼 수 있습니다.");
+  }
 
   currentPost = r.data;
 
@@ -1876,7 +1898,9 @@ async function savePost() {
 
     content: $("editor").innerHTML.trim(),
 
-    link_url: $("link").value.trim() || null
+    link_url: $("link").value.trim() || null,
+
+    is_secret: $("isSecret").checked
 
   };
 
@@ -1946,7 +1970,9 @@ async function adminUI() {
 
   let r = await sb.auth.getSession();
 
-  isAdmin = !!r.data.session;
+  const session = r.data.session;
+  const email = (session?.user?.email || "").toLowerCase();
+  isAdmin = !!session && email === ADMIN_EMAIL.toLowerCase();
 
   $("loginBox").classList.toggle("hidden", isAdmin);
 
